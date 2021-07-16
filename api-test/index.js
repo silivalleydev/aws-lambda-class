@@ -1,17 +1,14 @@
 const AWS = require('aws-sdk');
+const connectInfo = require('./env');
+const mysql = require('mysql');
 
-const dynamo = new AWS.DynamoDB.DocumentClient();
+const connection = mysql.createConnection({
+    host: connectInfo.host,
+    user: connectInfo.user,
+    password: connectInfo.password,
+    database: connectInfo.database
+})
 
-/**
- * Demonstrates a simple HTTP endpoint using API Gateway. You have full
- * access to the request and response payload, including headers and
- * status code.
- *
- * To scan a DynamoDB table, make a GET request with the TableName as a
- * query string parameter. To put, update, or delete an item, make a POST,
- * PUT, or DELETE request respectively, passing in the payload to the
- * DynamoDB API as a JSON body.
- */
 exports.handler = async (event, context) => {
     //console.log('Received event:', JSON.stringify(event, null, 2));
 
@@ -24,16 +21,23 @@ exports.handler = async (event, context) => {
     try {
         switch (event.httpMethod) {
             case 'DELETE':
-                body = await dynamo.delete(JSON.parse(event.body)).promise();
+                // body = await dynamo.delete(JSON.parse(event.body)).promise();
                 break;
             case 'GET':
-                body = await dynamo.scan({ TableName: event.queryStringParameters.TableName }).promise();
+                const SQL = "SELECT * FROM board";
+                connection.query(SQL, function (err, result, fields) {
+                    if (err) {
+                        body = err;
+                    } else {
+                        body = result;
+                    }
+                })
                 break;
             case 'POST':
-                body = await dynamo.put(JSON.parse(event.body)).promise();
+                // body = await dynamo.put(JSON.parse(event.body)).promise();
                 break;
             case 'PUT':
-                body = await dynamo.update(JSON.parse(event.body)).promise();
+                // body = await dynamo.update(JSON.parse(event.body)).promise();
                 break;
             default:
                 throw new Error(`Unsupported method "${event.httpMethod}"`);
