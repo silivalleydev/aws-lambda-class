@@ -10,7 +10,7 @@ const conn = mysql.createConnection({
 })
 exports.handler = async function(event, context, callback){
     let data;
-    let statusCode = '200';
+    let status = '200';
     const headers = {
         'Content-Type': 'application/json',
     };
@@ -30,15 +30,15 @@ exports.handler = async function(event, context, callback){
             );
         });
     } catch (error) {
-        statusCode = '400';
+        status = '400';
     }
 
     return {
-        statusCode,
-        body: {
-            status: statusCode,
-            data: JSON.stringify(dbResult)
-        },
+        statusCode: status,
+        body: JSON.stringify({
+            status,
+            data
+        }),
         headers,
     };
 
