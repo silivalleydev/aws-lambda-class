@@ -1,57 +1,41 @@
 const AWS = require('aws-sdk');
 const connectInfo = require('./env');
 const mysql = require('mysql');
+var async = require('async');
+var BreakException = {};
 
-const connection = mysql.createConnection({
+const conn = mysql.createConnection({
     host: connectInfo.host,
     user: connectInfo.user,
+    port: '3306',
     password: connectInfo.password,
     database: connectInfo.database
 })
-
-exports.handler = async (event, context) => {
-    //console.log('Received event:', JSON.stringify(event, null, 2));
-
+exports.handler = async function(event, context, callback){
     let body;
     let statusCode = '200';
     const headers = {
         'Content-Type': 'application/json',
     };
-
-    try {
-        switch (event.httpMethod) {
-            case 'DELETE':
-                // body = await dynamo.delete(JSON.parse(event.body)).promise();
-                break;
-            case 'GET':
-                const SQL = "SELECT * FROM board";
-                connection.query(SQL, function (err, result, fields) {
-                    if (err) {
-                        body = err;
-                    } else {
-                        body = result;
-                    }
-                })
-                break;
-            case 'POST':
-                // body = await dynamo.put(JSON.parse(event.body)).promise();
-                break;
-            case 'PUT':
-                // body = await dynamo.update(JSON.parse(event.body)).promise();
-                break;
-            default:
-                throw new Error(`Unsupported method "${event.httpMethod}"`);
-        }
-    } catch (err) {
-        statusCode = '400';
-        body = err.message;
-    } finally {
-        body = JSON.stringify(body);
-    }
+    const dbResult = await new Promise((resolve, reject) => {
+        conn.query(
+            'SELECT * FROM board',
+            function(err, rows, fields) {
+                console.log('검색결과?', err, rows, fields);
+                if (!err) {
+                    resolve(rows);
+                } else {
+                    console.log('Error while performing Query.', err);
+                    reject(err)
+                }
+            }
+        );
+    })
 
     return {
         statusCode: '200',
-        body:'222',
+        body: JSON.stringify(dbResult),
         headers,
     };
+
 };
