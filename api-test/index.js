@@ -1,76 +1,57 @@
-//ranking_get_sample.js
-var BreakException = {};
-var mysql = require('mysql');
-var connectInfo = require('./env.js');
-var async = require('async');
-//create connection pool
-var pool  = mysql.createPool({
-    connectionLimit : 20,
-    host     : connectInfo.host,
-    user     : connectInfo.user,
-    password : connectInfo.password,
-    port     : '3306',
-    database : connectInfo.database
-});
+const AWS = require('aws-sdk');
+const connectInfo = require('./env');
+const mysql = require('mysql');
 
-exports.handler = function(event, context, callback){
-    var count;
-    //top은 매핑된 쿼리파라미터 값입니다.
-    if (!event.top || isNaN(event.top)) {
-        context.fail('Bad Request: You submitted invalid input');
-        return;
-    } 
+const connection = mysql.createConnection({
+    host: connectInfo.host,
+    user: connectInfo.user,
+    password: connectInfo.password,
+    database: connectInfo.database
+})
 
-    count = Number(event.top);
+exports.handler = async (event, context) => {
+    //console.log('Received event:', JSON.stringify(event, null, 2));
 
-    //비동기처리를 위해서 async를 사용하였습니다.
-    async.waterfall([
-        function (cb) {
-            //Weekly Ranking을 가져옵니다.
-            pool.query(
-                'SELECT * FROM board',
-                function(err, rows, fields) {
-                    if (!err) {
-                        //정상적으로 가져오면 데이터와 함께 다음 함수를 호출합니다.
-                        cb(null, rows);
+    let body;
+    let statusCode = '200';
+    const headers = {
+        'Content-Type': 'application/json',
+    };
+
+    try {
+        switch (event.httpMethod) {
+            case 'DELETE':
+                // body = await dynamo.delete(JSON.parse(event.body)).promise();
+                break;
+            case 'GET':
+                const SQL = "SELECT * FROM board";
+                connection.query(SQL, function (err, result, fields) {
+                    if (err) {
+                        body = err;
                     } else {
-                        //에러가 나면 에러를 전달합니다.
-                        console.log('Error while performing Query.', err);
-                        cb(500);
+                        body = result;
                     }
-                }
-            );
-        }],
-        function (err, result) {
-            if (!err) {
-                if (result.length > 0) {
-                    var res = [];
+                })
+                break;
+            case 'POST':
+                // body = await dynamo.put(JSON.parse(event.body)).promise();
+                break;
+            case 'PUT':
+                // body = await dynamo.update(JSON.parse(event.body)).promise();
+                break;
+            default:
+                throw new Error(`Unsupported method "${event.httpMethod}"`);
+        }
+    } catch (err) {
+        statusCode = '400';
+        body = err.message;
+    } finally {
+        body = JSON.stringify(body);
+    }
 
-                    //쿼리 파라미터로 받은 top 만큼만 응답메세지로 만들어서 보냅니다.
-                    try {
-                        result.forEach(function(value, index) {
-                            if (index >= count) throw BreakException;
-
-                            var temp = {};
-                            // temp.name = value.Name;
-                            // temp.point = value.Point;
-                            res.push(temp);
-                        });
-                    } catch (e) {
-                        if (e !== BreakException) throw e;
-                    }
-                    context.succeed("sdcs");
-                } else {
-                    context.succeed('');
-                }
-            } else {
-                //에러는 코드만 받아서 처리하도록 했습니다.
-                if (err === 400) {
-                    context.fail('Bad Request: You submitted invalid input');
-                } else { 
-                    context.fail('Internal Error: Internal Error');
-                }
-            }
-        } 
-    );
+    return {
+        statusCode: '200',
+        body:'222',
+        headers,
+    };
 };
