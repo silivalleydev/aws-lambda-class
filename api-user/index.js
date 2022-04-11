@@ -1,5 +1,8 @@
 const connectInfo = require('./env');
 const getMethod = require('./get');
+const postMethod = require('./post');
+const putMethod = require('./put');
+const deleteMethod = require('./delete');
 const mysql = require('mysql');
 
 const conn = mysql.createConnection({
@@ -22,17 +25,17 @@ exports.handler = async function(event, context, callback){
         try {
             switch (event.httpMethod) {
                 case 'DELETE':
-                    body = console.log(JSON.parse(event.body));
+                    body = await deleteMethod(conn, event);
                     break;
                 case 'GET':
                     console.log(event.queryStringParameters, getMethod);
                     body = await getMethod(conn, event);
                     break;
                 case 'POST':
-                    body = console.log(JSON.parse(event.body));
+                    body = await postMethod(conn, event);
                     break;
                 case 'PUT':
-                    body = console.log(JSON.parse(event.body));
+                    body = await putMethod(conn, event);
                     break;
                 default:
                     throw new Error(`Unsupported method "${event.httpMethod}"`);

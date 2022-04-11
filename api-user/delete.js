@@ -1,6 +1,8 @@
-module.exports = async function post (conn, event) {
+module.exports = async function del (conn, event) {
+
+    let query = `delete from user where user_id=${event.queryStringParameters.user_id}`;
+
     try {
-        let query = `insert into user(name) values('${JSON.parse(event.body).name}')`;
         return await new Promise((resolve, reject) => {
             conn.query(
                 query,

@@ -1,8 +1,15 @@
 module.exports = async function get (conn, event) {
+
+    let query = 'SELECT * FROM user';
+
+    if (event.queryStringParameters && event.queryStringParameters.user_id) {
+        query += ` where user_id=${event.queryStringParameters.user_id}`
+    } 
+
     try {
         return await new Promise((resolve, reject) => {
             conn.query(
-                'SELECT * FROM user',
+                query,
                 function(err, rows, fields) {
                     console.log('검색결과?', err, rows, fields);
                     if (!err) {

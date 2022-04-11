@@ -1,6 +1,6 @@
-module.exports = async function post (conn, event) {
+module.exports = async function put (conn, event) {
     try {
-        let query = `insert into user(name) values('${JSON.parse(event.body).name}')`;
+        let query = `update user set name='${JSON.parse(event.body).name}' where user_id=${JSON.parse(event.body).user_id}`;
         return await new Promise((resolve, reject) => {
             conn.query(
                 query,
